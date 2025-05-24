@@ -1,0 +1,183 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-image: url('flight-background.jpg'); /* Add your background image */
+  background-size: cover; /* Ensure the image covers the entire background */
+  background-position: center; /* Center the background image */
+  background-repeat: no-repeat; /* Prevent the image from repeating */
+}
+
+.kiosk-container {
+  background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.kiosk-header h1 {
+  color: #00796b; /* Dark teal for the header */
+  margin-bottom: 10px;
+}
+
+.kiosk-header p {
+  color: #004d40; /* Slightly darker teal for the subtitle */
+  font-size: 1.1em;
+}
+
+/* Flight Info Section */
+.flight-info {
+  margin-top: 20px;
+}
+
+.flight-info label {
+  display: block;
+  font-size: 1.1em;
+  color: #00796b; /* Dark teal for labels */
+  margin-bottom: 10px;
+}
+
+.flight-info input {
+  width: 80%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 2px solid #00796b; /* Dark teal border */
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+.flight-info button {
+  background-color: #00796b; /* Dark teal button */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.flight-info button:hover {
+  background-color: #004d40; /* Darker teal on hover */
+}
+
+#flight-status {
+  margin-top: 20px;
+  font-size: 1.2em;
+  color: #00796b; /* Dark teal for status text */
+}
+
+/* Footer Styles */
+.kiosk-footer {
+  margin-top: 20px;
+  font-size: 0.9em;
+  color: #004d40; /* Dark teal for footer text */
+}
+
+.kiosk-footer a {
+  color: #00796b; /* Dark teal for links */
+  text-decoration: none;
+}
+
+.kiosk-footer a:hover {
+  text-decoration: underline;
+}/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-image: url('flight-background.jpg'); /* Add your background image */
+  background-size: cover; /* Ensure the image covers the entire background */
+  background-position: center; /* Center the background image */
+  background-repeat: no-repeat; /* Prevent the image from repeating */
+}
+
+.kiosk-container {
+  background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.kiosk-header h1 {
+  color: #00796b; /* Dark teal for the header */
+  margin-bottom: 10px;
+}
+
+.kiosk-header p {
+  color: #004d40; /* Slightly darker teal for the subtitle */
+  font-size: 1.1em;
+}
+
+/* Flight Info Section */
+.flight-info {
+  margin-top: 20px;
+}
+
+.flight-info label {
+  display: block;
+  font-size: 1.1em;
+  color: #00796b; /* Dark teal for labels */
+  margin-bottom: 10px;
+}
+
+.flight-info input {
+  width: 80%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 2px solid #00796b; /* Dark teal border */
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+.flight-info button {
+  background-color: #00796b; /* Dark teal button */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.flight-info button:hover {
+  background-color: #004d40; /* Darker teal on hover */
+}
+
+#flight-status {
+  margin-top: 20px;
+  font-size: 1.2em;
+  color: #00796b; /* Dark teal for status text */
+}
+
+/* Footer Styles */
+.kiosk-footer {
+  margin-top: 20px;
+  font-size: 0.9em;
+  color: #004d40; /* Dark teal for footer text */
+}
+
+.kiosk-footer a {
+  color: #00796b; /* Dark teal for links */
+  text-decoration: none;
+}
+
+.kiosk-footer a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,77 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #fff3e0; /* Light orange background */
+  background-image: url('background.jpg'); /* Add background image using the image name */
+  background-size: cover; /* Ensure the image covers the entire viewport */
+  background-position: center center; /* Center the image */
+  background-attachment: fixed; /* Keeps the background fixed during scrolling */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.kiosk-container {
+  background-color: #ffffff; /* White container */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.kiosk-header h1 {
+  color: #ef6c00; /* Dark orange for the header */
+  margin-bottom: 10px;
+}
+
+.kiosk-header p {
+  color: #e65100; /* Slightly darker orange for the subtitle */
+  font-size: 1.1em;
+}
+
+/* Check-In Form Section */
+.check-in-form {
+  margin-top: 20px;
+}
+
+.check-in-form label {
+  display: block;
+  font-size: 1.1em;
+  color: #ef6c00; /* Dark orange for labels */
+  margin-bottom: 10px;
+}
+
+.check-in-form input {
+  width: 80%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 2px solid #ef6c00; /* Dark orange border */
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+.check-in-form button {
+  background-color: #ef6c00; /* Dark orange button */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.check-in-form button:hover {
+  background-color: #e65100; /* Darker orange on hover */
+}
+
+#check-in-status {
+  margin-top: 20px;
+  font-size: 1.2em;
+  color: #ef6c00; /* Dark orange for status text */
+}

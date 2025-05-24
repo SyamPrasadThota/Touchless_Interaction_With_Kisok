@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airport Self-Service Kiosk</title>
+  <script>
+        // Function to check for gestures from Python backend
+        function checkGestureFromBackend() {
+            fetch('/get_gesture')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.gesture) {
+                        handleGestureParameter(data.gesture);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        
+        // Enhanced function to handle the gesture parameter and find matching images
+        function handleGestureParameter(parameter) {
+            // Special case: if parameter is '9', return to home page from any view
+            if (parameter === '9') {
+                showView('main-menu-view');
+                return;
+            }
+            
+            // Check if we're on the flight info page and handle flight selection gestures
+            const currentView = Array.from(document.querySelectorAll('.kiosk-container'))
+                .find(container => container.style.display !== 'none');
+            
+            if (currentView && currentView.id === 'flight-info-view') {
+                if (handleFlightSelectionGesture(parameter)) {
+                    return; // If gesture was handled for flight selection, don't continue with regular processing
+                }
+            }
+            
+            // Check if we're on the baggage tags page and handle baggage gestures
+            if (currentView && currentView.id === 'baggage-tags-view') {
+                if (handleBaggageSelectionGesture(parameter)) {
+                    return; // If gesture was handled for baggage selection, don't continue with regular processing
+                }
+            }
+            
+            // Rest of the existing function for handling other gestures
+            const visibleContainer = Array.from(document.querySelectorAll('.kiosk-container'))
+                .find(container => container.style.display !== 'none');
+            if (!visibleContainer) return;
+            const visibleImages = visibleContainer.querySelectorAll('img');
+            
+            const matchingImage = Array.from(visibleImages)
+                .find(img => img.src.toLowerCase().includes(parameter.toLowerCase() + '.png'));
+            if (matchingImage) {
+                const parentButton = matchingImage.closest('.kiosk-button') || 
+                               matchingImage.closest('a') ||
+                               matchingImage.closest('button');
+                if (parentButton) {
+                    if (parentButton.tagName === 'A') {
+                        const href = parentButton.getAttribute('href');
+                        if (href === '#') {
+                            const onclickStr = parentButton.getAttribute('onclick');
+                            if (onclickStr) {
+                                eval(onclickStr.replace('return false;', ''));
+                            }
+                        }
+                    } 
+                    else {
+                        parentButton.click();
+                    }
+                }
+            }
+        }
+        
+        // New function to handle flight selection gestures
+        function handleFlightSelectionGesture(parameter) {
+            const flightMappings = {
+                '22': 'AA123',
+                '3': 'BB456', 
+                '5': 'CC789',
+                '8': 'DD012'
+            };
+            
+            if (flightMappings[parameter]) {
+                const flightNumber = flightMappings[parameter];
+                
+                // Set the flight number
+                setFlightNumber(flightNumber);
+                
+                // Add a small delay to ensure the UI updates, then automatically check status
+                setTimeout(() => {
+                    checkFlightStatus();
+                    
+                    // Visual feedback that automation occurred
+                    const statusDiv = document.getElementById('flight-status');
+                    const originalContent = statusDiv.innerHTML;
+                    statusDiv.style.backgroundColor = '#e8f5e8';
+                    statusDiv.style.padding = '10px';
+                    statusDiv.style.borderRadius = '5px';
+                    statusDiv.style.border = '2px solid #4caf50';
+                    
+                    // Add automation indicator
+                    statusDiv.innerHTML = `<strong>🤖 Auto-selected:</strong> ${originalContent}`;
+                    
+                    // Reset styling after 3 seconds
+                    setTimeout(() => {
+                        statusDiv.style.backgroundColor = '';
+                        statusDiv.style.padding = '';
+                        statusDiv.style.borderRadius = '';
+                        statusDiv.style.border = '';
+                        statusDiv.innerHTML = originalContent;
+                    }, 3000);
+                    
+                }, 500);
+                
+                return true; // Indicate that the gesture was handled
+            }
+            
+        // New function to handle baggage selection gestures
+        function handleBaggageSelectionGesture(parameter) {
+            // If parameter is '21', open the weight dropdown
+            if (parameter === '21') {
+                const weightRange = document.getElementById('weight-range');
+                if (!weightRange.classList.contains('active')) {
+                    weightRange.classList.add('active');
+                    
+                    // Visual feedback that dropdown was opened automatically
+                    const selectBox = weightRange.querySelector('.select-box');
+                    const originalBg = selectBox.style.backgroundColor;
+                    selectBox.style.backgroundColor = '#e3f2fd';
+                    selectBox.style.border = '2px solid #2196f3';
+                    
+                    setTimeout(() => {
+                        selectBox.style.backgroundColor = originalBg;
+                        selectBox.style.border = '';
+                    }, 2000);
+                }
+                return true;
+            }
+            
+            // Handle weight selection gestures (only if dropdown is open)
+            const weightRange = document.getElementById('weight-range');
+            if (weightRange.classList.contains('active')) {
+                const weightMappings = {
+                    '22': { range: '1-10 kg', value: '1-10' },
+                    '8': { range: '11-20 kg', value: '11-20' },
+                    '3': { range: '21-30 kg', value: '21-30' }
+                };
+                
+                if (weightMappings[parameter]) {
+                    const mapping = weightMappings[parameter];
+                    
+                    // Set the selected weight
+                    document.getElementById('selected-weight').innerText = mapping.range;
+                    weightRange.classList.remove('active');
+                    
+                    // Add a small delay, then automatically print tags
+                    setTimeout(() => {
+                        printTags(mapping.range);
+                        
+                        // Visual feedback that automation occurred
+                        const resultDiv = document.getElementById('tag-result');
+                        const originalContent = resultDiv.innerHTML;
+                        resultDiv.style.backgroundColor = '#e8f5e8';
+                        resultDiv.style.padding = '10px';
+                        resultDiv.style.borderRadius = '5px';
+                        resultDiv.style.border = '2px solid #4caf50';
+                        
+                        // Add automation indicator
+                        resultDiv.innerHTML = `<strong>🤖 Auto-selected & Printed:</strong><br>${originalContent}`;
+                        
+                        // Reset styling after 3 seconds
+                        setTimeout(() => {
+                            resultDiv.style.backgroundColor = '';
+                            resultDiv.style.padding = '';
+                            resultDiv.style.borderRadius = '';
+                            resultDiv.style.border = '';
+                            resultDiv.innerHTML = originalContent;
+                        }, 3000);
+                        
+                    }, 500);
+                    
+                    return true;
+                }
+            }
+            
+            return false; // Gesture not handled by this function
+        }
+        
+        // Start checking for gestures periodically
+        function startGestureChecking() {
+            setInterval(checkGestureFromBackend, 1000); // Check every second
+        }
+        
+        // Modified event listener to start gesture checking
+        document.addEventListener('DOMContentLoaded', function() {
+            showView('main-menu-view');
+            initBaggageTagsDropdown();
+            startGestureChecking(); // Start checking for gestures
+        });
+        
+        // Previous JavaScript functions remain the same
+        function showView(viewId) {
+          // Hide all views
+          const views = document.querySelectorAll('.kiosk-container');
+          views.forEach(view => {
+            view.style.display = 'none';
+          });
+          
+          // Show the selected view
+          document.getElementById(viewId).style.display = 'block';
+          
+          // Change background based on view
+          if (viewId === 'flight-info-view') {
+            document.body.className = 'flight-page';
+          } else if (viewId === 'baggage-tags-view') {
+            document.body.className = 'baggage-page';
+          } else {
+            document.body.className = 'main-page';
+          }
+          // Special initialization for flight info view
+          if (viewId === 'flight-info-view') {
+            initFlightInfoView();
+          }
+        }
+        
+        // Flight Information Functions
+        function initFlightInfoView() {
+          const dropdown = document.getElementById('flight-number-dropdown');
+          dropdown.classList.add('open');
+          document.getElementById('dropdown-button').textContent = 'Select Flight Number';
+        }
+        
+        function setFlightNumber(value) {
+          const button = document.getElementById('dropdown-button');
+          button.textContent = value;
+          document.getElementById('flight-number-dropdown').classList.remove('open');
+        }
+        
+        function checkFlightStatus() {
+          const flightNumber = document.getElementById('dropdown-button').textContent;
+          if (flightNumber === 'Select Flight Number') {
+            document.getElementById('flight-status').innerText = 'Please select a flight number.';
+            return;
+          }
+          
+          // Enhanced flight status simulation with more realistic data
+          const flightStatuses = {
+            'AA123': ['on time - Gate A12', 'delayed by 25 minutes - Gate A12', 'now boarding - Gate A12', 'departed on time'],
+            'BB456': ['on time - Gate B8', 'delayed by 15 minutes - Gate B8', 'boarding in 10 minutes - Gate B8', 'departed with delay'],
+            'CC789': ['on time - Gate C15', 'delayed by 45 minutes - Gate C15', 'boarding now - Gate C15', 'departed on time'],
+            'DD012': ['on time - Gate D3', 'delayed by 30 minutes - Gate D3', 'final boarding call - Gate D3', 'departed with delay']
+          };
+          
+          const statusOptions = flightStatuses[flightNumber] || ['status unknown'];
+          const randomStatus = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+          const status = `Flight ${flightNumber} is ${randomStatus}.`;
+          document.getElementById('flight-status').innerText = status;
+        }
+        
+        // Baggage Tags Functions
+        function initBaggageTagsDropdown() {
+          // Toggle dropdown visibility
+          document.getElementById('weight-range').addEventListener('click', function() {
+            this.classList.toggle('active');
+          });
+          // Handle selection of options
+          const options = document.querySelectorAll('.options .option');
+          options.forEach(option => {
+            option.addEventListener('click', function() {
+              const selectedValue = this.getAttribute('data-value');
+              const selectedText = this.querySelector('span').innerText;
+              document.getElementById('selected-weight').innerText = selectedText;
+              document.getElementById('weight-range').classList.remove('active');
+            });
+          });
+        }
+        
+        function printTags(weightRange) {
+          weightRange = weightRange || document.getElementById('selected-weight').innerText;
+          
+          if (weightRange === 'Select Weight Range') {
+            document.getElementById('tag-result').innerText = 'Please select a weight range.';
+            return;
+          }
+          
+          // Enhanced tag message with more details
+          const tagDetails = {
+            '1-10 kg': 'Light baggage - Standard handling',
+            '11-20 kg': 'Medium baggage - Standard handling', 
+            '21-30 kg': 'Heavy baggage - Special handling required'
+          };
+          
+          const detail = tagDetails[weightRange] || 'Standard handling';
+          let tagMessage = `Baggage Tag Printed:\nWeight Range: ${weightRange}\n${detail}\nPlease handle with care.\nTag ID: BT${Date.now().toString().slice(-6)}`;
+          document.getElementById('tag-result').innerText = tagMessage;
+        }
+    </script>
+  <style>
+    /* Combined styles from styles.css, styles1.css, and styles2.css */
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-image: url('airport-background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    .kiosk-container {
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+    }
+    /* Header styles */
+    .kiosk-header h1 {
+      color: #00796b;
+      margin-bottom: 10px;
+    }
+    .kiosk-header p {
+      color: #004d40;
+      font-size: 1.1em;
+    }
+    /* Main Menu Button Styles */
+    .kiosk-main {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .kiosk-button {
+      text-align: center;
+      cursor: pointer;
+      margin: 10px;
+      padding: 15px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 80%;
+      max-width: 300px;
+    }
+    .kiosk-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .kiosk-button img.left-img {
+      width: 50px;
+      height: 50px;
+    }
+    .kiosk-button span {
+      flex-grow: 1;
+      margin: 0 10px;
+      font-size: 1.1em;
+      color: #00796b;
+    }
+    .kiosk-button img.right-img {
+      width: 20px;
+      height: 20px;
+    }
+    /* Footer Styles */
+    .kiosk-footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #004d40;
+    }
+    .kiosk-footer a {
+      color: #00796b;
+      text-decoration: none;
+    }
+    .kiosk-footer a:hover {
+      text-decoration: underline;
+    }
+    /* Footer link with image */
+    .footer-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .footer-link img {
+      width: 20px;
+      height: 20px;
+    }
+    /* Flight Info Styles */
+    .flight-info {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .flight-info label {
+      display: block;
+      font-size: 1.1em;
+      color: #00796b;
+      margin-bottom: 10px;
+    }
+    .flight-info button, .check-in-form button {
+      background-color: #00796b;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 15px;
+    }
+    .flight-info button:hover, .check-in-form button:hover {
+      background-color: #004d40;
+    }
+    #flight-status, #tag-result {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #00796b;
+      transition: all 0.3s ease;
+      white-space: pre-line; /* Allow line breaks in tag results */
+    }
+    /* Dropdown Styles */
+    .dropdown {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+    }
+    .dropdown button {
+      width: 100%;
+      padding: 10px;
+      text-align: left;
+      border: 2px solid #00796b;
+      background-color: white;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      width: 100%;
+      border: 2px solid #00796b;
+      background-color: white;
+      border-radius: 5px;
+      z-index: 1;
+    }
+    .dropdown.open .dropdown-content {
+      display: block;
+    }
+    .dropdown-content div {
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .dropdown-content div img {
+      width: 30px;
+      height: 30px;
+      margin-right: 10px;
+    }
+    .dropdown-content div:hover {
+      background-color: #f0f0f0;
+    }
+    /* Baggage Tags Styles */
+    .check-in-form {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    /* Custom select dropdown for baggage */
+    .custom-select {
+      position: relative;
+      width: 200px;
+    }
+    .select-box {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    .select-box img {
+      width: 20px;
+      height: 20px;
+    }
+    .options {
+      display: none;
+      position: absolute;
+      width: 100%;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      z-index: 10;
+    }
+    .options div {
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .options div:hover {
+      background-color: #ddd;
+    }
+    .options div img {
+      width: 20px;
+      height: 20px;
+    }
+    .custom-select.active .options {
+      display: block;
+    }
+    /* Map Container */
+    .map-container {
+      margin: 20px auto;
+      max-width: 100%;
+    }
+    .map-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+    }
+    /* Help Options */
+    .help-options {
+      margin: 20px auto;
+      text-align: left;
+      max-width: 80%;
+    }
+    .help-options ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .help-options li {
+      margin: 10px 0;
+      padding: 10px;
+      background-color: rgba(0, 121, 107, 0.1);
+      border-radius: 5px;
+    }
+    /* Different page backgrounds */
+    body.main-page {
+      background-image: url('airport-background.jpg');
+    }
+    body.flight-page {
+      background-image: url('flight-background.jpg');
+    }
+    body.baggage-page {
+      background-image: url('background.jpg');
+    }
+    
+    /* New styles for automation feedback */
+    .automation-indicator {
+      background-color: #e8f5e8;
+      padding: 10px;
+      border-radius: 5px;
+      border: 2px solid #4caf50;
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <!-- Container for all views -->
+  <div id="app-container">
+    <!-- Main Menu View -->
+    <div id="main-menu-view" class="kiosk-container">
+      <header class="kiosk-header">
+        <h1>Airport Self-Service Kiosk</h1>
+        <p>Please select a service:</p>
+      </header>
+      <main class="kiosk-main">
+        <!-- Flight Information -->
+        <div class="kiosk-button" onclick="showView('flight-info-view')">
+          <img src="static/flight-icon.png" alt="Flight Information" class="left-img">
+          <span>Flight Information</span>
+          <img src="static/21.png" alt="Flight Information Right" class="right-img">
+        </div>
+        <!-- Check-In -->
+        <div class="kiosk-button" onclick="showView('baggage-tags-view')">
+          <img src="static/checkin-icon.png" alt="Check-In" class="left-img">
+          <span>Baggage Tags</span>
+          <img src="static/22.png" alt="Check-In Right" class="right-img">
+        </div>
+        <!-- Airport Map -->
+        <div class="kiosk-button" onclick="showView('airport-map-view')">
+          <img src="static/map-icon.png" alt="Airport Map" class="left-img">
+          <span>Airport Map</span>
+          <img src="static/3.png" alt="Airport Map Right" class="right-img">
+        </div>
+        <!-- Help -->
+        <div class="kiosk-button" onclick="showView('help-view')">
+          <img src="static/help-icon.png" alt="Help" class="left-img">
+          <span>Help</span>
+          <img src="static/8.png" alt="Help Right" class="right-img">
+        </div>
+      </main>
+      <footer class="kiosk-footer">
+        <p>Thank you for using our airport kiosk!</p>
+      </footer>
+    </div>
+    
+    <!-- Flight Information View -->
+    <div id="flight-info-view" class="kiosk-container" style="display: none;">
+      <header class="kiosk-header">
+        <h1>Flight Information</h1>
+        <p>Check the status of your flight:</p>
+      </header>
+      <main class="kiosk-main">
+        <div class="flight-info">
+          <label for="flight-number">Select Flight Number:</label>
+          <!-- Custom Dropdown for flight numbers with images -->
+          <div class="dropdown" id="flight-number-dropdown">
+            <button id="dropdown-button">Select Flight Number</button>
+            <div class="dropdown-content">
+              <div onclick="setFlightNumber('AA123')">
+                <img src="static/22.png" alt="Flight AA123"> AA123
+              </div>
+              <div onclick="setFlightNumber('BB456')">
+                <img src="static/3.png" alt="Flight BB456"> BB456
+              </div>
+              <div onclick="setFlightNumber('CC789')">
+                <img src="static/5.png" alt="Flight CC789"> CC789
+              </div>
+              <div onclick="setFlightNumber('DD012')">
+                <img src="static/8.png" alt="Flight DD012"> DD012
+              </div>
+            </div>
+          </div>
+          <button onclick="checkFlightStatus()">Check Status</button>
+          <div id="flight-status"></div>
+        </div>
+      </main>
+      <footer class="kiosk-footer">
+        <div class="footer-link">
+          <p><a href="#" onclick="showView('main-menu-view'); return false;">Back to Main Menu</a></p>
+          <img src="static/9.png" alt="Menu Icon">
+        </div>
+      </footer>
+    </div>
+    
+    <!-- Baggage Tags View -->
+    <div id="baggage-tags-view" class="kiosk-container" style="display: none;">
+      <header class="kiosk-header">
+        <h1>Baggage Tags</h1>
+        <p>Select your bag tags:</p>
+      </header>
+      <main class="kiosk-main">
+        <div class="check-in-form">
+          <label for="weight-range">Weights in range:</label>
+          <!-- Custom Dropdown -->
+          <div class="custom-select" id="weight-range">
+            <div class="select-box">
+              <span id="selected-weight">Select Weight Range</span>
+              <img src="static/21.png" alt="Dropdown Icon">
+            </div>
+            <div class="options">
+              <div class="option" data-value="1-10">
+                <span>1-10 kg</span>
+                <img src="static/22.png" alt="Weight Icon 1-10 kg">
+              </div>
+              <div class="option" data-value="11-20">
+                <span>11-20 kg</span>
+                <img src="static/8.png" alt="Weight Icon 11-20 kg">
+              </div>
+              <div class="option" data-value="21-30">
+                <span>21-30 kg</span>
+                <img src="static/3.png" alt="Weight Icon 21-30 kg">
+              </div>
+            </div>
+          </div>
+          
+          <button onclick="printTags()">Print Tags</button>
+          <div id="tag-result"></div>
+        </div>
+      </main>
+      <footer class="kiosk-footer">
+        <div class="footer-link">
+          <p><a href="#" onclick="showView('main-menu-view'); return false;">Back to Main Menu</a></p>
+          <img src="static/9.png" alt="Menu Icon">
+        </div>
+      </footer>
+    </div>
+    
+    <!-- Airport Map View -->
+    <div id="airport-map-view" class="kiosk-container" style="display: none;">
+      <header class="kiosk-header">
+        <h1>Airport Map</h1>
+        <p>Airport Map:</p>
+      </header>
+      <main class="kiosk-main">
+        <div class="map-container">
+          <img src="static/airport-map.png" alt="Airport Map" class="map-image">
+        </div>
+      </main>
+      <footer class="kiosk-footer">
+        <div class="footer-link">
+          <p><a href="#" onclick="showView('main-menu-view'); return false;">Back to Main Menu</a></p>
+          <img src="static/9.png" alt="Menu Icon">
+        </div>
+      </footer>
+    </div>
+    
+    <!-- Help View -->
+    <div id="help-view" class="kiosk-container" style="display: none;">
+      <header class="kiosk-header">
+        <h1>Help</h1>
+        <p>How can we assist you?</p>
+      </header>
+      <main class="kiosk-main">
+        <div class="help-options">
+          <p>For assistance, please contact:</p>
+          <ul>
+            <li><strong>Airport Information Desk:</strong> +1-234-567-890</li>
+            <li><strong>Customer Support:</strong> support@airport.com</li>
+          </ul>
+        </div>
+      </main>
+      <footer class="kiosk-footer">
+        <div class="footer-link">
+          <p><a href="#" onclick="showView('main-menu-view'); return false;">Back to Main Menu</a></p>
+          <img src="static/9.png" alt="Menu Icon">
+        </div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
